@@ -1,6 +1,6 @@
 [submodule "lwip"]
 	path = lwip
-	url = https://github.com/russdill/lwip.git
+	url = https://github.com/masx200/lwip.git
 [submodule "lwip-udhcpd"]
 	path = lwip-udhcpd
 	url = https://github.com/russdill/lwip-udhcpd.git
