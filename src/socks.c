@@ -122,7 +122,11 @@ socks_udp_read(const int fd, short int method, void *priv)
 	p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p +
 			LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf)) + offset));
 
-	len = recv(fd, p->payload, p->len, 0);
+	/* Use recvfrom to get client address for UDP ASSOCIATE */
+	data->udp_client_addrlen = sizeof(data->udp_client_addr);
+	len = recvfrom(fd, p->payload, p->len, 0,
+		      (struct sockaddr *)&data->udp_client_addr,
+		      &data->udp_client_addrlen);
 	LWIP_DEBUGF(SOCKS_DEBUG, ("%s: read %d bytes of udp from client\n", __func__, len));
 	if (len < 0) {
 		if (errno == EAGAIN || errno == EINTR)
@@ -198,17 +202,13 @@ socks_udp_bind(struct event_base *base, struct socks_data *data)
 		data->udp_port =
 			ntohs(((struct sockaddr_in6 *) &addr)->sin6_port);
 
-	addrlen = sizeof(addr);
-	if (ip_addr_to_sockaddr(&data->ipaddr, data->port, &addr, &addrlen) < 0) {
-		close(fd);
-		return -1;
-	}
+	/* Initialize client address storage */
+	memset(&data->udp_client_addr, 0, sizeof(data->udp_client_addr));
+	data->udp_client_addrlen = sizeof(data->udp_client_addr);
 
-	if (connect(fd, &addr, addrlen) < 0) {
-		LWIP_DEBUGF(SOCKS_DEBUG, ("%s: connect %m\n", __func__));
-		close(fd);
-		return -1;
-	}
+	/* NOTE: Removed connect() call to allow UDP ASSOCIATE to work properly.
+	 * The socket will now use sendto()/recvfrom() instead of send()/recv().
+	 * This allows the proxy to forward UDP packets to multiple destinations. */
 
 	event = event_new(base, fd, EV_READ|EV_PERSIST, socks_udp_read, data);
 	event_add(event, NULL);

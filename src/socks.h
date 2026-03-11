@@ -50,6 +50,8 @@ struct socks_data {
 	struct event *udp_event; /* Provides notification callbacks for linux side */
 	struct pbuf *udp_pbuf;
 	int udp_pbuf_len;
+	struct sockaddr_storage udp_client_addr; /* Store client address for UDP replies */
+	socklen_t udp_client_addrlen;
 };
 
 void socks_kill(struct socks_data *data);

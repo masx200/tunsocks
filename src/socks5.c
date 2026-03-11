@@ -288,8 +288,12 @@ socks5_udp_recv(struct socks_data *data, struct pbuf *p,
 	hdr->frag = 0;
 	hdr->atyp = IP_IS_V4(addr) ? SOCKS5_ATYP_IPV4 : SOCKS5_ATYP_IPV6;
 
-	if (send(data->udp_fd, p->payload, p->len, 0) < 0) {
+	/* Use sendto() to send back to the client that sent the request */
+	if (sendto(data->udp_fd, p->payload, p->len, 0,
+		   (struct sockaddr *)&data->udp_client_addr,
+		   data->udp_client_addrlen) < 0) {
 		/* Error sending packet */
+		LWIP_DEBUGF(SOCKS_DEBUG, ("%s: sendto failed: %d\n", __func__, errno));
 	}
 }
 
