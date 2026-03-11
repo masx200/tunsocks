@@ -6,9 +6,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <lwip/tcp.h>
 #include <lwip/udp.h>
 #include <lwip/priv/tcp_priv.h>
+#include <lwip/ip6_addr.h>
 
 #include "forward_local.h"
 #include "socks.h"
@@ -191,12 +193,20 @@ static int forward_local_udp(struct event_base *base,
 	/* Store remote IP address */
 	if (result->ai_family == AF_INET) {
 		struct sockaddr_in *sin = (struct sockaddr_in *)result->ai_addr;
-		ip_addr_copy_from_ip4(udp_ctx->remote_ipaddr, *(ip4_addr_t *)&sin->sin_addr);
-		IP_SET_TYPE_VAL(udp_ctx->remote_ipaddr, IPADDR_TYPE_V4);
+		ip_addr_t ipaddr;
+		ip4_addr_t ip4;
+		memcpy(&ip4, &sin->sin_addr, sizeof(ip4));
+		ip_addr_copy_from_ip4(ipaddr, ip4);
+		udp_ctx->remote_ipaddr = ipaddr;
+#if LWIP_IPV6
 	} else if (result->ai_family == AF_INET6) {
 		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)result->ai_addr;
-		ip_addr_copy_from_ip6(udp_ctx->remote_ipaddr, *(ip6_addr_t *)&sin6->sin6_addr);
-		IP_SET_TYPE_VAL(udp_ctx->remote_ipaddr, IPADDR_TYPE_V6);
+		ip_addr_t ipaddr;
+		ip6_addr_t ip6;
+		memcpy(&ip6, &sin6->sin6_addr, sizeof(ip6));
+		ip_addr_copy_from_ip6(ipaddr, &ip6);
+		udp_ctx->remote_ipaddr = ipaddr;
+#endif
 	} else {
 		freeaddrinfo(result);
 		free(udp_ctx->remote_host);
@@ -218,9 +228,19 @@ static int forward_local_udp(struct event_base *base,
 		return ret;
 	}
 
-	fd = socket(result->ai_family, SOCK_DGRAM|O_NONBLOCK, IPPROTO_UDP);
+	fd = socket(result->ai_family, SOCK_DGRAM, IPPROTO_UDP);
 	if (fd < 0) {
 		perror("socket");
+		freeaddrinfo(result);
+		free(udp_ctx->remote_host);
+		free(udp_ctx);
+		return -1;
+	}
+
+	/* Set non-blocking */
+	if (evutil_make_socket_nonblocking(fd) < 0) {
+		perror("evutil_make_socket_nonblocking");
+		close(fd);
 		freeaddrinfo(result);
 		free(udp_ctx->remote_host);
 		free(udp_ctx);
