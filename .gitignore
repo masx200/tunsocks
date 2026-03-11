@@ -16,3 +16,4 @@ install-sh
 missing
 .deps/
 .dirstamp
+.claude/settings.local.json
