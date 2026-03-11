@@ -1,8 +1,8 @@
 # libevent support for lwIP
 
-This contains a number of components for use of lwIP with libevent on Linux.
-It includes a core for integrating lwIP into the libevent loop, a set of
-netifs that utilize libevent, and accessory utilities.
+This contains a number of components for use of lwIP with libevent on Linux. It
+includes a core for integrating lwIP into the libevent loop, a set of netifs
+that utilize libevent, and accessory utilities.
 
 ## Core Library
 
@@ -20,10 +20,10 @@ specified netif to be stored to a pcap capture file.
 
 ### nettest
 
-Induces latency and dropped packets for a specified netif. This can be used
-for testing. The latency value is fixed and given in microseconds. The
-packet drop rate is used to randomly select packets to be dropped and ranges
-between 0.0 (disabled) and 1.0 (all packets).
+Induces latency and dropped packets for a specified netif. This can be used for
+testing. The latency value is fixed and given in microseconds. The packet drop
+rate is used to randomly select packets to be dropped and ranges between 0.0
+(disabled) and 1.0 (all packets).
 
 ### sockaddr
 
@@ -39,9 +39,9 @@ using readv/writev. This is most useful for writev.
 
 This is not Linux or libevent specific, but provides additional host lookup
 services around dns_gethostbyname. It provides a lookup engine that supports
-domain names. Search domains can be added via host_add_search. When host
-names are looked up, the tail of the search domains will be added in turn along
-with the bare lookup.
+domain names. Search domains can be added via host_add_search. When host names
+are looked up, the tail of the search domains will be added in turn along with
+the bare lookup.
 
 ### lwipevbuf
 
@@ -76,8 +76,8 @@ netif and all netif output is injected to the process's stdin
 Sends and receives netif datagrams via a UDP port. This can open two UDP ports,
 one for raw datagrams and one for datagrams prepended with a 2 byte BE length.
 The netif keeps track of recent clients and associated hardware addresses.
-Broadcast packets are sent to all recent clients, and any addressed packets
-are only sent to the appropriate client.
+Broadcast packets are sent to all recent clients, and any addressed packets are
+only sent to the appropriate client.
 
 ### vdeportif
 
@@ -89,7 +89,5 @@ Emulates a VDE switch allowing libvdeplug2 clients to connect.
 
 ### slirpif
 
-Provides a slirp like interface that uses the host's local IP stack to send
-and receive packets. Currently supports TCP and UDP. This is primarily for
-testing.
-
+Provides a slirp like interface that uses the host's local IP stack to send and
+receive packets. Currently supports TCP and UDP. This is primarily for testing.

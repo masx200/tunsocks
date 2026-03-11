@@ -3,7 +3,7 @@
 
 struct event_base;
 
-int forward_local(struct event_base *base, const char *host, const char *port,
-	const char *local_host, const char *local_port, int keep_alive);
+int forward_local(struct event_base *base, const char *local_host, const char *local_port,
+	const char *remote_host, const char *remote_port, int keep_alive, int is_udp);
 
 #endif

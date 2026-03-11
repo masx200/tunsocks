@@ -36,6 +36,7 @@ struct conn_info {
 	char *bind_port;
 	char *host;
 	char *host_port;
+	int is_udp;  /* 1 for UDP, 0 for TCP */
 	struct conn_info *next;
 };
 
@@ -82,6 +83,7 @@ static struct conn_info *parse_conn_info(const char *str, int fmin, int fmax)
 		return NULL;
 
 	info = calloc(1, sizeof(*info));
+	info->is_udp = 0;  /* Default to TCP */
 
 	/* Bind address is the leading optional field */
 	if (fields > fmin) {
@@ -126,7 +128,8 @@ static void print_usage(const char *argv0)
 {
 	fprintf(stderr,
 "usage: %s <options>\n\n"
-"    -L [bind_address:]bind_port:host_address:host_port\n"
+"    -L [bind_address:]bind_port:host_address:host_port (TCP)\n"
+"    -j [bind_address:]bind_port:host_address:host_port (UDP)\n"
 "    -D [bind_address:]bind_port SOCKS4a/5 proxy\n"
 "    -H [bind_address:]bind_port HTTP proxy\n"
 "    -P proxy_pac_file:bind_port HTTP server for proxy.pac\n"
@@ -288,7 +291,7 @@ int main(int argc, char *argv[])
 			host_add_search(str);
 	}
 
-	while ((c = getopt(argc, argv, "Sl:o:L:D:H:P:R:k:m:s:d:i:n:G:p:gu:U:v:V:t:T:h")) != -1) {
+	while ((c = getopt(argc, argv, "Sl:o:L:j:D:H:P:R:k:m:s:d:i:n:G:p:gu:U:v:V:t:T:h")) != -1) {
 
 		switch (c) {
 		case 'S':
@@ -309,6 +312,15 @@ int main(int argc, char *argv[])
 			if (!info)
 				print_usage(argv[0]);
 
+			info->next = local;
+			local = info;
+			break;
+		case 'j':
+			info = parse_conn_info(optarg, 3, 4);
+			if (!info)
+				print_usage(argv[0]);
+
+			info->is_udp = 1;  /* Mark as UDP forwarding */
 			info->next = local;
 			local = info;
 			break;
@@ -453,7 +465,7 @@ int main(int argc, char *argv[])
 			str = str ? : "localhost";
 
 		if (forward_local(base, str, info->bind_port,
-			info->host, info->host_port, keep_alive) < 0)
+			info->host, info->host_port, keep_alive, info->is_udp) < 0)
 			return -1;
 
 		local = info->next;
