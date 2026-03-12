@@ -18,3 +18,4 @@ missing
 .dirstamp
 .claude/settings.local.json
 server.log
+.vscode
